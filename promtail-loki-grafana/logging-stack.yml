@@ -1,0 +1,46 @@
+version: "3.9"
+
+configs:
+  promtail-config:
+    file: config/promtail/config.yml
+
+networks:
+  logging:
+  traefik:
+    external: true
+
+volumes:
+  loki-data:
+    driver: glusterfs
+
+services:
+
+  promtail:
+    image: grafana/promtail:2.6.1
+    volumes:
+    - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    configs:
+    - source: promtail-config
+      target: /etc/promtail/config.yml
+    networks:
+    - logging
+    deploy:
+      mode: global
+
+  loki:
+    image: grafana/loki:2.6.1
+    networks:
+    - logging
+    volumes:
+    - loki-data:/loki
+
+  grafana:
+    image: grafana/grafana:8.5.14
+    networks:
+    - logging
+    - traefik
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.logging_grafana.rule: Host(`grafana.${DOMAIN-example.com}`)
+        traefik.http.services.logging_grafana.loadbalancer.server.port: 3000
