@@ -1,0 +1,191 @@
+version: '3.9'
+
+networks:
+  harbor:
+  traefik:
+    external: true
+
+configs:
+  registry-config:
+    file: config/registry/config.yml
+  registry-passwd:
+    file: config/registry/passwd
+  registry-root-cert:
+    file: config/registry/root.crt
+  registryctl-config:
+    file: config/registryctl/config.yml
+  core-app-conf:
+    file: config/core/app.conf
+  core-private-key:
+    file: config/core/private_key.pem
+  jobservice-config:
+    file: config/jobservice/config.yml
+  proxy-nginx-conf-1:
+    file: config/proxy/nginx.conf
+
+volumes:
+  registry-data:
+    driver: glusterfs
+  core-data:
+    driver: glusterfs
+  jobservice-data:
+    driver: glusterfs
+  postgres-data:
+    driver: glusterfs
+  chartmuseum-data:
+    driver: glusterfs
+
+services:
+
+  registry:
+    image: docker.io/bitnami/harbor-registry:2
+    environment:
+      REGISTRY_HTTP_SECRET: CHANGEME
+    networks:
+    - harbor
+    configs:
+    - source: registry-config
+      target: /etc/registry/config.yml
+    - source: registry-passwd
+      target: /etc/registry/passwd
+    - source: registry-root-cert
+      target: /etc/registry/root.pem
+    volumes:
+    - registry-data:/storage
+
+  registryctl:
+    image: docker.io/bitnami/harbor-registryctl:2
+    environment:
+      CORE_SECRET: CHANGEME
+      JOBSERVICE_SECRET: CHANGEME
+      REGISTRY_HTTP_SECRET: CHANGEME
+    networks:
+    - harbor 
+    configs:
+    - source: registry-config
+      target: /etc/registry/config.yml
+    - source: registry-passwd
+      target: /etc/registry/passwd
+    - source: registry-root-cert
+      target: /etc/registry/root.pem
+    - source: registryctl-config
+      target: /etc/registryctl/config.yml
+    volumes:
+    - registry-data:/storage
+
+  postgresql:
+    image: docker.io/bitnami/postgresql:13
+    environment:
+      POSTGRESQL_PASSWORD: bitnami
+      POSTGRESQL_DATABASE: registry
+    networks:
+    - harbor 
+    volumes:
+    - postgres-data:/bitnami/postgresql
+
+  core:
+    image: docker.io/bitnami/harbor-core:2
+    environment:
+      CORE_KEY: change-this-key
+      _REDIS_URL_CORE: redis://redis:6379/0
+      SYNC_REGISTRY: "false"
+      CHART_CACHE_DRIVER: redis
+      _REDIS_URL_REG: redis://redis:6379/1
+      PORT: 8080
+      LOG_LEVEL: info
+      EXT_ENDPOINT: https://reg.example.com
+      DATABASE_TYPE: postgresql
+      REGISTRY_CONTROLLER_URL: http://registryctl:8080
+      POSTGRESQL_HOST: postgresql
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_DATABASE: registry
+      POSTGRESQL_USERNAME: postgres
+      POSTGRESQL_PASSWORD: bitnami
+      POSTGRESQL_SSLMODE: disable
+      REGISTRY_URL: http://registry:5000
+      TOKEN_SERVICE_URL: http://core:8080/service/token
+      HARBOR_ADMIN_PASSWORD: bitnami
+      CORE_SECRET: CHANGEME
+      JOBSERVICE_SECRET: CHANGEME
+      ADMIRAL_URL:
+      WITH_NOTARY: "False"
+      WITH_CHARTMUSEUM: "True"
+      CHART_REPOSITORY_URL: http://chartmuseum:8080
+      CORE_URL: http://core:8080
+      JOBSERVICE_URL: http://jobservice:8080
+      REGISTRY_STORAGE_PROVIDER_NAME: filesystem
+      REGISTRY_CREDENTIAL_USERNAME: harbor_registry_user
+      REGISTRY_CREDENTIAL_PASSWORD: harbor_registry_password
+      READ_ONLY: "false"
+      RELOAD_KEY: 
+    networks:
+    - harbor
+    configs:
+      - source: core-app-conf
+        target: /etc/core/app.conf
+      - source: core-private-key
+        target: /etc/core/private_key.pem
+    volumes:
+      - core-data:/data
+
+  portal:
+    image: docker.io/bitnami/harbor-portal:2
+    networks:
+    - harbor 
+
+  jobservice:
+    image: docker.io/bitnami/harbor-jobservice:2
+    environment:
+      CORE_SECRET: CHANGEME
+      JOBSERVICE_SECRET: CHANGEME
+      CORE_URL: http://core:8080
+      REGISTRY_CONTROLLER_URL: http://registryctl:8080
+      REGISTRY_CREDENTIAL_USERNAME: harbor_registry_user
+      REGISTRY_CREDENTIAL_PASSWORD: harbor_registry_password
+    networks:
+    - harbor 
+    configs:
+    - source: jobservice-config
+      target: /etc/jobservice/config.yml
+    volumes:
+    - jobservice-data:/var/log/jobs
+
+  redis:
+    image: docker.io/bitnami/redis:7.0
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    networks:
+    - harbor 
+
+  harbor-nginx:
+    image: docker.io/bitnami/nginx:1.23
+    configs:
+    - source: proxy-nginx-conf-1
+      target: /opt/bitnami/nginx/conf/nginx.conf
+    networks:
+    - harbor
+    - traefik
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.harbor_proxy.rule: Host(`reg.${DOMAIN-example.com}`)
+        traefik.http.routers.harbor_proxy.middlewares: harbor_proxy_sslheaders
+        traefik.http.services.harbor_proxy.loadbalancer.server.port: 8080
+        traefik.http.middlewares.harbor_proxy_sslheaders.headers.sslProxyHeaders.X-Forwarded-Proto: https
+
+  chartmuseum:
+    image: docker.io/bitnami/chartmuseum:0
+    environment:
+      CACHE: redis
+      CACHE_REDIS_ADDR: redis:6379
+      CACHE_REDIS_DB: 1
+      DEPTH: 1
+      PORT: 8080
+      STORAGE: local
+      STORAGE_LOCAL_ROOTDIR: /bitnami/data
+      ALLOW_OVERWRITE: "true"
+      INDEX_LIMIT: 0
+    networks:
+    - harbor 
+    volumes:
+    - chartmuseum-data:/bitnami/data
