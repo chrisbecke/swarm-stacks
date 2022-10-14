@@ -93,7 +93,7 @@ services:
       _REDIS_URL_REG: redis://redis:6379/1
       PORT: 8080
       LOG_LEVEL: info
-      EXT_ENDPOINT: https://reg.example.com
+      EXT_ENDPOINT: https://reg.${DOMAIN-example.com}
       DATABASE_TYPE: postgresql
       REGISTRY_CONTROLLER_URL: http://registryctl:8080
       POSTGRESQL_HOST: postgresql
