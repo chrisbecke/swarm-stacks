@@ -19,3 +19,16 @@ Ensure that:
   }
 }
 ```
+
+## Quickstart
+
+1. Ensure your swarm nodes meet the required docker engine version, log-driver and log-opts.
+2. Deploy the stack
+3. Connect to grafana.example.com
+4. Login as admin, admin
+5. Go to Settings to attach a new Datasource.
+6. Choose a "Loki" datasource
+7. Enter "http://loki:3100" as the loki url.
+8. Test and Save
+9. Click on the Explore button on the left, ensure "Loki" is the default data source, and "code" is the default mode.
+10. Clicking on "Log Browser" should show the labels captures from containers logging in your swarm.
