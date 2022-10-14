@@ -169,9 +169,10 @@ services:
       labels:
         traefik.enable: "true"
         traefik.http.routers.harbor_proxy.rule: Host(`reg.${DOMAIN-example.com}`)
-        traefik.http.routers.harbor_proxy.middlewares: harbor_proxy_sslheaders
+        traefik.http.routers.harbor_proxy.middlewares: harbor_proxy_sslheaders,harbor_proxy_https
         traefik.http.services.harbor_proxy.loadbalancer.server.port: 8080
         traefik.http.middlewares.harbor_proxy_sslheaders.headers.sslProxyHeaders.X-Forwarded-Proto: https
+        traefik.http.middlewares.harbor_proxy_https.redirectscheme.scheme: https
 
   chartmuseum:
     image: docker.io/bitnami/chartmuseum:0
