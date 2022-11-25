@@ -7,7 +7,7 @@ networks:
 services:
   proxy:
     image: mitmproxy/mitmproxy:latest
-    command: mitmweb --web-host 0.0.0.0 --no-web-open-browser
+    command: mitmweb --web-host * --no-web-open-browser
     networks:
     - traefik
     tty: true

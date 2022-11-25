@@ -16,3 +16,6 @@ deploy:
 
 clean:
 	docker stack rm $(STACK)
+
+browser:
+	open http://mitm.${DOMAIN}
