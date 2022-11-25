@@ -8,8 +8,6 @@ services:
   proxy:
     image: mitmproxy/mitmproxy:latest
     command: mitmweb --web-host 0.0.0.0 --no-web-open-browser
-    ports:
-    - 8081:8081
     networks:
     - traefik
     tty: true
@@ -19,8 +17,9 @@ services:
         traefik.http.routers.mitmproxy_mitmweb.rule: Host(`mitm.${DOMAIN}`)
         traefik.http.services.mitmproxy_mitmweb.loadbalancer.server.port: 8081
         traefik.http.services.mitmproxy_mitmweb.loadbalancer.passhostheader: "false"
-#        traefik.http.middlewares.mitmproxy_localhost.headers.customrequestheaders.Host: 1.1.1.1
-#        traefik.http.routers.mitmproxy_mitmweb.middlewares: mitmproxy_localhost
+#        traefik.http.middlewares.mitmproxy_localhost.headers.customrequestheaders.Host: ""
+        traefik.http.middlewares.mitmproxy_localhost.headers.customrequestheaders.Origin: ""
+        traefik.http.routers.mitmproxy_mitmweb.middlewares: mitmproxy_localhost
       placement:
         constraints:
           - node.role==worker
