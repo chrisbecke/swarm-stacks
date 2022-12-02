@@ -1,0 +1,73 @@
+version: "3.9"
+
+networks:
+  traefik:
+    external: true
+
+volumes:
+  data:
+    driver: glusterfs
+  mattermost:
+    driver: glusterfs
+
+services:
+
+  postgres:
+    image: postgres:${POSTGRES_IMAGE_TAG}
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    volumes:
+      - data:/var/lib/postgresql/data
+    environment:
+      # timezone inside container
+      - TZ
+      # necessary Postgres options/variables
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    deploy:
+     placement:
+       constraints:
+       - node.role==worker
+
+  mattermost:
+    image: mattermost/${MATTERMOST_IMAGE}:${MATTERMOST_IMAGE_TAG}
+    networks:
+      default:
+      traefik:
+    environment:
+      # timezone inside container
+      - TZ
+      # necessary Mattermost options/variables (see env.example)
+      - MM_SQLSETTINGS_DRIVERNAME
+      - MM_SQLSETTINGS_DATASOURCE
+      # necessary for bleve
+      - MM_BLEVESETTINGS_INDEXDIR
+      # additional settings
+      - MM_SERVICESETTINGS_SITEURL
+    tmpfs:
+      - /tmp
+    volumes:
+      - mattermost:/mattermost:rw
+#      - ${MATTERMOST_CONFIG_PATH}:/mattermost/config:rw
+#      - ${MATTERMOST_DATA_PATH}:/mattermost/data:rw
+#      - ${MATTERMOST_LOGS_PATH}:/mattermost/logs:rw
+#      - ${MATTERMOST_PLUGINS_PATH}:/mattermost/plugins:rw
+#      - ${MATTERMOST_CLIENT_PLUGINS_PATH}:/mattermost/client/plugins:rw
+#      - ${MATTERMOST_BLEVE_INDEXES_PATH}:/mattermost/bleve-indexes:rw
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+      restart_policy:
+        max_attempts: 5
+      endpoint_mode: dnsrr
+      placement:
+        constraints:
+        - node.role==worker
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.mattermost_mattermost.rule: Host(`${DOMAIN}`)
+        traefik.http.services.mattermost_mattermost.loadbalancer.server.port: ${APP_PORT}
