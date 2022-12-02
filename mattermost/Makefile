@@ -7,7 +7,7 @@ SERVICE = $(STACK)_$(service)
 # Mattermost Variables
 
 # Domain of service
-export DOMAIN = chat.unreal.mgsops.net
+export DOMAIN ?= mm.example.com
 
 # Container settings
 ## Timezone inside the containers. The value needs to be in the form 'Europe/Berlin'.
@@ -22,7 +22,7 @@ export TZ = UTC
 ## user to connect to the database.
 ## A guide on how to change the database user to a nonsuperuser can be found in docs/creation-of-nonsuperuser.md
 export POSTGRES_IMAGE_TAG = 13-alpine
-export POSTGRES_DATA_PATH = ./volumes/db/var/lib/postgresql/data
+#export POSTGRES_DATA_PATH = ./volumes/db/var/lib/postgresql/data
 
 export POSTGRES_USER = mmuser
 export POSTGRES_PASSWORD = mmuser_password
