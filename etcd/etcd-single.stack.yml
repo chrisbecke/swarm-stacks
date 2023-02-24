@@ -1,0 +1,25 @@
+version: "3.9"
+
+volumes:
+  etcd:
+    driver: local
+
+networks:
+  etcd:
+    attachable: true
+
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.4
+    environment:
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+    working_dir: /data
+    volumes:
+    - etcd:/data
+    networks:
+      etcd:
+#    deploy:
+#      placement:
+#        constraints:
+#        - node.role==worker

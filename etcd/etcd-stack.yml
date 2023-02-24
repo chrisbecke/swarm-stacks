@@ -1,0 +1,32 @@
+version: "3.9"
+
+volumes:
+  etcd:
+    driver: local
+
+networks:
+  etcd:
+    attachable: true
+
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.4
+    hostname: "{{.Node.Hostname}}"
+    environment:
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+      ETCD_NAME: "{{.Node.Hostname}}"
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://{{.Node.Hostname}}:2380
+      ETCD_INITIAL_CLUSTER: ${ETCD_INITIAL_CLUSTER}      
+    working_dir: /data
+    volumes:
+    - etcd:/data
+    networks:
+      etcd:
+    deploy:
+      replicas: 3
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+        - node.labels.etcd==true
