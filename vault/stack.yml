@@ -16,7 +16,7 @@ services:
     environment:
       SKIP_SETCAP: 1
       VAULT_ADDR: http://localhost:8200
-      UNSEAL_KEY: afyqlTG6xZi14HewLVeX/ZRCLkuoAX6WYvGEyVGL99Q=
+     
       VAULT_LOCAL_CONFIG: >
         {
           "storage": {
