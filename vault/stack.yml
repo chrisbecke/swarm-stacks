@@ -88,11 +88,33 @@ services:
           "api_addr": "http://vault{{.Task.Slot}}:8200",
           "cluster_addr": "http://vault{{.Task.Slot}}:8201"
         }
-
     volumes:
     - vault:/vault/file
     deploy:
       replicas: 3
+      placement:
+        constraints:
+        - node.role==worker
+
+  agent:
+    image: vault:latest
+    command: agent -config=/vault/config
+    environment:
+      SKIP_SETCAP: 1
+      VAULT_ADDR: http://vault:8200
+      VAULT_LOCAL_CONFIG: >
+        {
+          "listener": [
+            {
+              "tcp": {
+                "address": "0.0.0.0:8200",
+                "tls_disable": true
+              }
+            }
+          ]
+        }
+    deploy:
+      replicas: 2
       placement:
         constraints:
         - node.role==worker

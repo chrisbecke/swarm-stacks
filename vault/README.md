@@ -40,3 +40,12 @@ vault operator init -format=json -recovery-shares 1 -recovery-threshold 1
 vault login hvs.m87UnzjGojNHjVHfCIJ5y2lK
 vault secrets enable -path=kv kv-v2
 ```
+
+## Using the Agent
+
+```
+docker service ps demo_agent --no-trunc --format '{{.Node}} {{.Name}}.{{.ID}}' --filter desired-state=running
+docker -c lab722 exec -it demo_agent.1.erbrxz98q7db5tn0bibevwzbu /bin/sh
+vault login hvs.m87UnzjGojNHjVHfCIJ5y2lK
+# Now issue any commands. Vault agent will direct the command to the active vault automatically.
+```
