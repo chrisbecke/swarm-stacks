@@ -1,0 +1,33 @@
+version: "3.9"
+
+networks:
+  consul:
+    name: consul
+    attachable: true
+
+volumes:
+  consul-data:
+    driver: shared
+    name: '{{index .Service.Labels "com.docker.stack.namespace"}}_consul-data_{{.Task.Slot}'
+
+services:
+  consul:
+    image: consul
+    hostname: consul{{.Task.Slot}}
+    command: agent -server -client=0.0.0.0 -retry-join=tasks.consul -ui -bootstrap-expect 3 -datacenter traefik -data-dir /consul/data
+    volumes:
+      - consul-data:/consul/data
+    environment:
+      CONSUL_BIND_INTERFACE: eth0
+      CONSUL_LOCAL_CONFIG: '{"leave_on_terminate": true}'
+    networks:
+      consul:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+      replicas: 3
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+        - node.role==worker
