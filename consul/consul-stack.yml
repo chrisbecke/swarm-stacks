@@ -4,11 +4,13 @@ networks:
   consul:
     name: consul
     attachable: true
+  traefik:
+    external: true
 
 volumes:
   consul-data:
     driver: shared
-    name: '{{index .Service.Labels "com.docker.stack.namespace"}}_consul-data_{{.Task.Slot}'
+    name: '{{index .Service.Labels "com.docker.stack.namespace"}}_consul-data_{{.Task.Slot}}'
 
 services:
   consul:
@@ -25,6 +27,7 @@ services:
         }
     networks:
       consul:
+      traefik:
     deploy:
       resources:
         limits:
@@ -36,5 +39,5 @@ services:
         - node.role==worker
       labels:
         traefik.enable: "true"
-        traefik.http.routers.consul.rule: HostRegExp(`consul{any:.*}`)
+        traefik.http.routers.consul.rule: HostRegexp(`consul{any:.*}`)
         traefik.http.services.consul.loadbalancer.server.port: 8500
