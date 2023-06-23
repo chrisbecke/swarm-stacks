@@ -19,7 +19,10 @@ services:
       - consul-data:/consul/data
     environment:
       CONSUL_BIND_INTERFACE: eth0
-      CONSUL_LOCAL_CONFIG: '{"leave_on_terminate": true}'
+      CONSUL_LOCAL_CONFIG: >
+        {
+          "leave_on_terminate": true
+        }
     networks:
       consul:
     deploy:
@@ -31,3 +34,7 @@ services:
         max_replicas_per_node: 1
         constraints:
         - node.role==worker
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.consul.rule: HostRegExp(`consul{any:.*}`)
+        traefik.http.services.consul.loadbalancer.server.port: 8500
