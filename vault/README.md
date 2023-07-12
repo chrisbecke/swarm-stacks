@@ -7,7 +7,7 @@ This demonstrates a semi production ready setup of vault, using
 ## More Information
 
 There are TWO vaults instantiated in this project.
-The first is a single node vault that is definately not in any way production ready. It must be manually configured and unsealed, and will not auto unseal if Docker restarts / moves it.
+The first is a single node vault that is definately not in any way production ready. It must be manually configured, and unseals using a docker healthcheck. (The healtcheck hack is less of a problem than the secrets being backed into the deployment.)
 We enable the transit engine on this vault and create an unseal_key for the production vault to use.
 
 The production vault can then be initialized, and its nodes will subsequently auto-unseal when restarted or migrated for as long as the transit vault is reachable.
