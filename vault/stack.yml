@@ -2,14 +2,14 @@ version: "3.9"
 
 volumes:
   transit:
-    driver: glusterfs
+    driver: shared
   vault:
-    driver: glusterfs
+    driver: shared
     name: demo_vault_{{.Task.Slot}}
 
 services:
   transit:
-    image: vault
+    image: hashicorp/vault:latest
     command: server
     volumes:
     - transit:/vault/file
@@ -38,11 +38,11 @@ services:
     healthcheck:
       test: |
         vault status
-        if [ $? -eq 2 ]; then
+        if [ $$? -eq 2 ]; then
           vault operator unseal $UNSEAL_KEY
         fi
   vault:
-    image: vault
+    image: hashicorp/vault:latest
     command: server
     hostname: vault{{.Task.Slot}}
     environment:
@@ -97,7 +97,7 @@ services:
         - node.role==worker
 
   agent:
-    image: vault:latest
+    image: hashicorp/vault:latest
     command: agent -config=/vault/config
     environment:
       SKIP_SETCAP: 1

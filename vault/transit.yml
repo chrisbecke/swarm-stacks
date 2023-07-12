@@ -1,0 +1,40 @@
+version: "3.9"
+
+volumes:
+  transit:
+    driver: shared
+
+services:
+  transit:
+    image: hashicorp/vault:latest
+    command: server
+    volumes:
+    - transit:/vault/file
+    environment:
+      SKIP_SETCAP: 1
+      VAULT_ADDR: http://localhost:8200
+     
+      VAULT_LOCAL_CONFIG: >
+        {
+          "storage": {
+            "file": {
+              "path": "/vault/file"
+            }
+          },  
+          "listener": [
+            {
+              "tcp": {
+                "address": "0.0.0.0:8200",
+                "tls_disable": true
+              }
+            }
+          ],
+          "disable_mlock": true,
+          "api_addr": "http://transit:8200"
+        }
+    healthcheck:
+      test: |
+        vault status
+        if [ $? -eq 2 ]; then
+          vault operator unseal $UNSEAL_KEY
+        fi
