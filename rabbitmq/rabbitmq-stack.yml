@@ -4,6 +4,10 @@ configs:
   rabbitmq-1:
     file: rabbitmq.conf
 
+volumes:
+  rabbitmq:
+    driver: shared
+
 networks:
   traefik:
     external: true
