@@ -6,7 +6,7 @@ configs:
 
 volumes:
   rabbitmq:
-    driver: shared
+#    driver: shared
 
 networks:
   traefik:
@@ -15,9 +15,10 @@ networks:
 services:
   rabbitmq:
     image: rabbitmq:3-management
-    hostname: rabbitmq{{.Task.Slot}}
+    hostname: rabbitmq{{.Task.Slot}}.default
     environment:
       RABBITMQ_ERLANG_COOKIE: "{{ .Service.ID }}"
+      RABBITMQ_USE_LONGNAME: "true"
     configs:
     - source: rabbitmq-1
       target: /etc/rabbitmq/rabbitmq.conf
